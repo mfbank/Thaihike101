@@ -6,7 +6,7 @@ import { collection, serverTimestamp, runTransaction, doc } from 'firebase/fires
 import { db } from '@/lib/firebase';
 import { SerializedTrip, SerializedVanSchedule } from '@/types';
 import { formatThaiDate, formatTripDateRange } from '@/lib/utils';
-import { CheckCircle, ArrowLeft, MapPin, Calendar, Clock, Users } from 'lucide-react';
+import { CheckCircle, ArrowLeft, MapPin, Calendar, Clock, Users, Shield } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-error';
 import { Modal } from '@/components/Modal';
 import { QRCodeSVG } from 'qrcode.react';
@@ -46,16 +46,11 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
     trekkingPole: 0
   });
 
-  const [insuranceInfo, setInsuranceInfo] = useState({
-    prefix: '',
-    idCardNumber: '',
-    age: '',
-    dateOfBirth: '',
-    bloodType: '',
-    chronicDisease: '',
-    foodAllergy: '',
-    emergencyContactName: '',
-    emergencyContactPhone: ''
+  const [userInfo, setUserInfo] = useState({
+    fullName: '',
+    nickname: '',
+    phoneNumber: '',
+    lineId: ''
   });
 
   const equipmentPrices = {
@@ -78,12 +73,6 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
     );
   };
   
-  const [userInfo, setUserInfo] = useState({
-    fullName: '',
-    nickname: '',
-    phoneNumber: '',
-    lineId: ''
-  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -111,14 +100,11 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
       return;
     }
     if (step === 3) {
-      if (!userInfo.nickname || !userInfo.phoneNumber || !userInfo.lineId || 
-          !userInfo.fullName || !insuranceInfo.prefix || !insuranceInfo.idCardNumber || 
-          !insuranceInfo.age || !insuranceInfo.dateOfBirth || !insuranceInfo.bloodType ||
-          !insuranceInfo.emergencyContactName || !insuranceInfo.emergencyContactPhone) {
+       if (!userInfo.nickname || !userInfo.phoneNumber || !userInfo.lineId || !userInfo.fullName) {
         setModalConfig({
           isOpen: true,
           title: 'ข้อมูลไม่ครบถ้วน',
-          message: 'กรุณากรอกข้อมูลผู้เดินทางและข้อมูลประกันให้ครบถ้วน',
+          message: 'กรุณากรอกข้อมูลผู้เดินทางให้ครบถ้วน',
           type: 'alert'
         });
         return;
@@ -200,15 +186,6 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
           nickname: userInfo.nickname,
           phoneNumber: userInfo.phoneNumber,
           lineId: userInfo.lineId,
-          prefix: insuranceInfo.prefix,
-          idCardNumber: insuranceInfo.idCardNumber,
-          age: parseInt(insuranceInfo.age),
-          dateOfBirth: insuranceInfo.dateOfBirth,
-          bloodType: insuranceInfo.bloodType,
-          chronicDisease: insuranceInfo.chronicDisease,
-          foodAllergy: insuranceInfo.foodAllergy,
-          emergencyContactName: insuranceInfo.emergencyContactName,
-          emergencyContactPhone: insuranceInfo.emergencyContactPhone,
           totalAmount: (trip.pricePerPerson || 0) + calculateEquipmentTotal(),
           status: 'Confirmed',
           createdAt: serverTimestamp()
@@ -531,7 +508,11 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
                 <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
                   <span className="mr-2">👤</span> ข้อมูลผู้เดินทาง
                 </h3>
-                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล (ตามบัตรประชาชน)</label>
+                    <input type="text" id="fullName" value={userInfo.fullName} onChange={e => setUserInfo({...userInfo, fullName: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
+                  </div>
                   <div>
                     <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">ชื่อเล่น</label>
                     <input type="text" id="nickname" value={userInfo.nickname} onChange={e => setUserInfo({...userInfo, nickname: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
@@ -540,7 +521,7 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
                     <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
                     <input type="tel" id="phoneNumber" placeholder="08xxxxxxxx" value={userInfo.phoneNumber} onChange={e => setUserInfo({...userInfo, phoneNumber: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label htmlFor="lineId" className="block text-sm font-medium text-gray-700">LINE ID</label>
                     <input type="text" id="lineId" value={userInfo.lineId} onChange={e => setUserInfo({...userInfo, lineId: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
                   </div>
@@ -550,58 +531,23 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
                   <h3 className="text-lg font-bold text-emerald-900 mb-4 flex items-center">
                     <span className="mr-2">🛡️</span> ข้อมูลความคุ้มครองอุบัติเหตุ
                   </h3>
-                  
-                  <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <div className="sm:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700">คำนำหน้า</label>
-                      <select value={insuranceInfo.prefix} onChange={e => setInsuranceInfo({...insuranceInfo, prefix: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border">
-                        <option value="">เลือก</option>
-                        <option value="นาย">นาย</option>
-                        <option value="นาง">นาง</option>
-                        <option value="นางสาว">นางสาว</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-5">
-                      <label className="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล (ตามบัตรประชาชน)</label>
-                      <input type="text" value={userInfo.fullName} onChange={e => setUserInfo({...userInfo, fullName: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="block text-sm font-medium text-gray-700">เลขบัตรประจำตัวประชาชน</label>
-                      <input type="text" value={insuranceInfo.idCardNumber} onChange={e => setInsuranceInfo({...insuranceInfo, idCardNumber: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700">อายุ</label>
-                      <input type="number" value={insuranceInfo.age} onChange={e => setInsuranceInfo({...insuranceInfo, age: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">วัน/เดือน/ปีเกิด</label>
-                      <input type="date" value={insuranceInfo.dateOfBirth} onChange={e => setInsuranceInfo({...insuranceInfo, dateOfBirth: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">หมู่เลือด</label>
-                      <select value={insuranceInfo.bloodType} onChange={e => setInsuranceInfo({...insuranceInfo, bloodType: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border">
-                        <option value="">เลือก</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="AB">AB</option>
-                        <option value="O">O</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">โรคประจำตัว</label>
-                      <input type="text" value={insuranceInfo.chronicDisease} onChange={e => setInsuranceInfo({...insuranceInfo, chronicDisease: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">แพ้อาหาร</label>
-                      <input type="text" value={insuranceInfo.foodAllergy} onChange={e => setInsuranceInfo({...insuranceInfo, foodAllergy: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="block text-sm font-medium text-gray-700">ชื่อบุคคลติดต่อกรณีฉุกเฉิน</label>
-                      <input type="text" value={insuranceInfo.emergencyContactName} onChange={e => setInsuranceInfo({...insuranceInfo, emergencyContactName: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="block text-sm font-medium text-gray-700">เบอร์โทรติดต่อกรณีฉุกเฉิน</label>
-                      <input type="tel" value={insuranceInfo.emergencyContactPhone} onChange={e => setInsuranceInfo({...insuranceInfo, emergencyContactPhone: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-3 border" />
+                  <div className="bg-white p-6 rounded-lg border border-emerald-200 shadow-sm">
+                    <p className="text-gray-700 mb-4 font-medium">
+                      กรุณากรอกข้อมูลสำหรับทำประกันอุบัติเหตุผ่านลิงก์ด้านล่างนี้:
+                    </p>
+                    <a 
+                      href="https://docs.google.com/forms/d/e/1FAIpQLSfVUlyfSskPgKrYzyEbYcrC6F7Y7jgl7cjKIOIyYHMgo3PnrA/viewform" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-md"
+                    >
+                      <Shield className="w-5 h-5 mr-2" />
+                      คลิกเพื่อกรอกข้อมูลประกันอุบัติเหตุ
+                    </a>
+                  <div className="mt-6 p-3 bg-yellow-50 border border-yellow-100 rounded-md">
+                    <p className="text-xs text-yellow-800 leading-relaxed">
+                        <strong>คำแนะนำ:</strong> ข้อมูลนี้จำเป็นสำหรับการทำประกันอุบัติเหตุระหว่างการเดินทาง กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้องเพื่อสิทธิประโยชน์ในการคุ้มครองของท่าน
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, runTransaction, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Booking, SerializedBooking, SerializedTrip, SerializedVanSchedule } from '@/types';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-error';
@@ -493,6 +493,17 @@ export default function AdminBookings() {
                 <h3 className="text-sm font-bold text-emerald-800 uppercase tracking-wider mb-4 flex items-center">
                   <Shield className="w-5 h-5 mr-2" /> ข้อมูลสำหรับทำประกันอุบัติเหตุ
                 </h3>
+                <div className="mb-4">
+                  <a 
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSfVUlyfSskPgKrYzyEbYcrC6F7Y7jgl7cjKIOIyYHMgo3PnrA/viewform" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors text-xs font-medium"
+                  >
+                    <Shield className="w-3.5 h-3.5 mr-2" />
+                    ดูแบบฟอร์มประกันอุบัติเหตุ (Google Form)
+                  </a>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                   <div className="space-y-1">
                     <p className="text-gray-500 text-xs">คำนำหน้า / ชื่อ-สกุล</p>
