@@ -1,0 +1,188 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: trips
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required)
+    //   - description: string (required)
+    //   - location: string (required)
+    //   - difficulty: string (required, 'Easy', 'Medium', 'Hard')
+    //   - date: timestamp (required)
+    //   - durationDays: number (required)
+    //   - pricePerPerson: number (required)
+    //   - tentPrice: number (required)
+    //   - totalCapacity: number (required)
+    //   - bookedSeats: number (required)
+    //   - tentCapacity: number (required)
+    //   - bookedTents: number (required)
+    //   - thumbnailUrl: string (optional)
+    //   - isActive: boolean (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: vanSchedules
+    // Document ID: auto-generated
+    // Fields:
+    //   - tripId: string (required)
+    //   - departureTime: timestamp (required)
+    //   - pickupLocation: string (required)
+    //   - capacity: number (required)
+    //   - bookedSeats: number (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: bookings
+    // Document ID: auto-generated
+    // Fields:
+    //   - tripId: string (required)
+    //   - vanScheduleId: string (required)
+    //   - seatNumber: string (required)
+    //   - tentsCount: number (required)
+    //   - fullName: string (required)
+    //   - nickname: string (required)
+    //   - phoneNumber: string (required)
+    //   - lineId: string (required)
+    //   - totalAmount: number (required)
+    //   - status: string (required, 'Pending', 'Confirmed', 'Cancelled')
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: users
+    // Document ID: uid
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, 'admin')
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        (request.auth.token.email in ["chankasi13@gmail.com", "phatpcr8@gmail.com"])
+      );
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidTrip(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.description is string && data.description.size() < 2000 &&
+             data.location is string && data.location.size() > 0 && data.location.size() < 100 &&
+             data.difficulty in ['Easy', 'Medium', 'Hard'] &&
+             data.date is timestamp &&
+             data.durationDays is number && data.durationDays > 0 &&
+             data.pricePerPerson is number && data.pricePerPerson >= 0 &&
+             (!('tentPrice' in data) || (data.tentPrice is number && data.tentPrice >= 0)) &&
+             data.totalCapacity is number && data.totalCapacity > 0 &&
+             (!('bookedSeats' in data) || (data.bookedSeats is number && data.bookedSeats >= 0)) &&
+             (!('tentCapacity' in data) || (data.tentCapacity is number && data.tentCapacity >= 0)) &&
+             (!('bookedTents' in data) || (data.bookedTents is number && data.bookedTents >= 0)) &&
+             (!('thumbnailUrl' in data) || data.thumbnailUrl == "" || isValidUrl(data.thumbnailUrl)) &&
+             data.isActive is bool &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    function isValidVanSchedule(data) {
+      return data.tripId is string && data.tripId.size() > 0 && data.tripId.size() < 50 &&
+             data.departureTime is timestamp &&
+             data.pickupLocation is string && data.pickupLocation.size() > 0 && data.pickupLocation.size() < 200 &&
+             data.capacity is number && data.capacity > 0 &&
+             (!('bookedSeats' in data) || (data.bookedSeats is number && data.bookedSeats >= 0)) &&
+             (!('bookedSeatsList' in data) || data.bookedSeatsList is list) &&
+             (!('seatNicknames' in data) || data.seatNicknames is map) &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    function isValidBooking(data) {
+      return data.tripId is string && data.tripId.size() > 0 && data.tripId.size() < 50 &&
+             data.vanScheduleId is string && data.vanScheduleId.size() > 0 && data.vanScheduleId.size() < 50 &&
+             data.seatNumber is string && data.seatNumber.size() > 0 && data.seatNumber.size() < 10 &&
+             (!('tentsCount' in data) || (data.tentsCount is number && data.tentsCount >= 0) || (data.tentsCount is string)) &&
+             (!('equipment' in data) || data.equipment is map) &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             (!('nickname' in data) || (data.nickname is string && data.nickname.size() >= 0 && data.nickname.size() < 50)) &&
+             data.phoneNumber is string && data.phoneNumber.size() > 0 && data.phoneNumber.size() < 20 &&
+             (!('lineId' in data) || (data.lineId is string && data.lineId.size() >= 0 && data.lineId.size() < 50)) &&
+             (!('totalAmount' in data) || (data.totalAmount is number && data.totalAmount >= 0) || (data.totalAmount is string)) &&
+             data.status in ['Pending', 'Confirmed', 'Cancelled'] &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['email', 'role', 'createdAt']) &&
+             hasRequiredFields(['email', 'role']) &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.role == 'admin' &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /trips/{tripId} {
+      // Public can read active trips
+      allow read: if true;
+      allow create: if isAdmin() && isValidTrip(request.resource.data);
+      allow update: if (isAdmin() && (isValidTrip(request.resource.data) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeats', 'bookedTents']))) ||
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeats', 'bookedTents']) && 
+                        request.resource.data.get('bookedSeats', 0) <= request.resource.data.get('totalCapacity', 0) &&
+                        request.resource.data.get('bookedTents', 0) <= request.resource.data.get('tentCapacity', 0));
+      allow delete: if isAdmin() && resource.data.get('bookedSeats', 0) == 0;
+    }
+
+    match /vanSchedules/{scheduleId} {
+      // Public can read van schedules
+      allow read: if true;
+      allow create: if isAdmin() && isValidVanSchedule(request.resource.data);
+      allow update: if (isAdmin() && (isValidVanSchedule(request.resource.data) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeats', 'bookedSeatsList', 'seatNicknames']))) ||
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeats', 'bookedSeatsList', 'seatNicknames']) && 
+                        request.resource.data.get('bookedSeats', 0) == resource.data.get('bookedSeats', 0) + 1 &&
+                        request.resource.data.get('bookedSeats', 0) <= request.resource.data.get('capacity', 0));
+      allow delete: if isAdmin() && resource.data.get('bookedSeats', 0) == 0;
+    }
+
+    match /bookings/{bookingId} {
+      // Public can create bookings and view their own receipt (get by ID), but only admins can list/update/delete them
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isValidBooking(request.resource.data) && request.resource.data.status == 'Confirmed';
+      allow update: if isAdmin() && (isValidBooking(request.resource.data) || request.resource.data.status == 'Cancelled') && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidUser(request.resource.data) && request.auth.uid == userId;
+      allow update: if isAdmin() && isValidUser(request.resource.data) && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
+      allow delete: if isAdmin();
+    }
+  }
+}

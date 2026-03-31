@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "Trip": {
+      "title": "Trip",
+      "description": "A hiking trip available for booking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the trip." },
+        "description": { "type": "string", "description": "Description of the trip." },
+        "location": { "type": "string", "description": "Location of the hike." },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"], "description": "Difficulty level." },
+        "date": { "type": "string", "format": "date-time", "description": "Start date of the trip." },
+        "durationDays": { "type": "number", "description": "Duration in days." },
+        "pricePerPerson": { "type": "number", "description": "Price per person (van seat) in THB." },
+        "tentPrice": { "type": "number", "description": "Price per tent in THB." },
+        "totalCapacity": { "type": "number", "description": "Total number of van seats available." },
+        "bookedSeats": { "type": "number", "description": "Number of seats currently booked." },
+        "tentCapacity": { "type": "number", "description": "Total number of tents available." },
+        "bookedTents": { "type": "number", "description": "Number of tents currently booked." },
+        "thumbnailUrl": { "type": "string", "format": "uri", "description": "URL of the trip thumbnail image." },
+        "isActive": { "type": "boolean", "description": "Whether the trip is visible to the public." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["name", "description", "location", "difficulty", "date", "durationDays", "pricePerPerson", "tentPrice", "totalCapacity", "bookedSeats", "tentCapacity", "bookedTents", "isActive", "createdAt"]
+    },
+    "VanSchedule": {
+      "title": "VanSchedule",
+      "description": "A van schedule associated with a specific trip.",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string", "description": "ID of the associated trip." },
+        "departureTime": { "type": "string", "format": "date-time", "description": "Departure time of the van." },
+        "pickupLocation": { "type": "string", "description": "Pick-up location." },
+        "capacity": { "type": "number", "description": "Total capacity of the van." },
+        "vanNumber": { "type": "number", "description": "Van number (1-4)." },
+        "bookedSeats": { "type": "number", "description": "Number of seats currently booked in this van." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["tripId", "departureTime", "pickupLocation", "capacity", "vanNumber", "bookedSeats", "createdAt"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A booking made by a user for a trip and van schedule.",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string", "description": "ID of the booked trip." },
+        "vanScheduleId": { "type": "string", "description": "ID of the booked van schedule." },
+        "seatNumber": { "type": "string", "description": "Seat number in the van." },
+        "tentsCount": { "type": "number", "description": "Number of tents booked." },
+        "equipment": {
+          "type": "object",
+          "description": "Rented equipment counts.",
+          "properties": {
+            "tentSet": { "type": "number" },
+            "tent": { "type": "number" },
+            "sleepingBag": { "type": "number" },
+            "sleepingPad": { "type": "number" },
+            "pillow": { "type": "number" },
+            "trekkingPole": { "type": "number" }
+          }
+        },
+        "fullName": { "type": "string", "description": "Full name of the user." },
+        "nickname": { "type": "string", "description": "Nickname of the user." },
+        "phoneNumber": { "type": "string", "description": "Phone number of the user." },
+        "lineId": { "type": "string", "description": "LINE ID of the user." },
+        "prefix": { "type": "string", "description": "Prefix (Mr, Ms, etc)." },
+        "idCardNumber": { "type": "string", "description": "ID Card Number." },
+        "age": { "type": "number", "description": "Age." },
+        "dateOfBirth": { "type": "string", "description": "Date of Birth." },
+        "bloodType": { "type": "string", "description": "Blood Type." },
+        "chronicDisease": { "type": "string", "description": "Chronic Disease." },
+        "foodAllergy": { "type": "string", "description": "Food Allergy." },
+        "emergencyContactName": { "type": "string", "description": "Emergency Contact Name." },
+        "emergencyContactPhone": { "type": "string", "description": "Emergency Contact Phone." },
+        "totalAmount": { "type": "number", "description": "Total amount paid." },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Cancelled"], "description": "Status of the booking." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["tripId", "vanScheduleId", "seatNumber", "tentsCount", "fullName", "nickname", "phoneNumber", "lineId", "totalAmount", "status", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Admin user profile.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Email address of the user." },
+        "role": { "type": "string", "enum": ["admin"], "description": "Role of the user." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["email", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "trips": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Collection of all hiking trips."
+    },
+    "vanSchedules": {
+      "schema": { "$ref": "#/entities/VanSchedule" },
+      "description": "Collection of all van schedules."
+    },
+    "bookings": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Collection of all user bookings."
+    },
+    "users": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of admin users."
+    }
+  }
+}
