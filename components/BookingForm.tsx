@@ -570,10 +570,10 @@ export default function BookingForm({ trip, schedules }: BookingFormProps) {
               
               <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-lg border border-gray-200 mb-8">
                 <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-                  <QRCodeSVG value={qrValue} size={200} />
+                  <img src="/qrcodepay.png" alt="Payment QR Code" className="object-contain" />
                 </div>
                 <p className="text-lg font-medium text-gray-900">สแกนเพื่อชำระเงิน ฿{(totalAmount || 0).toLocaleString()}</p>
-                <p className="text-sm text-gray-500 mt-1">PromptPay: {promptPayNumber}</p>
+                <p className="text-sm text-gray-500 mt-1">PromptPay</p>
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-8">

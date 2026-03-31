@@ -222,7 +222,7 @@ export default function ReceiptPage() {
             <div className="col-span-1 flex flex-col items-center justify-center border-l border-gray-100 pl-4">
               <p className="text-xs font-bold text-gray-900 mb-2 text-center">กลุ่ม LINE</p>
               <div className="bg-white p-1.5 rounded-lg border border-gray-200 inline-block mb-1">
-                <QRCodeCanvas value={`https://line.me/R/ti/g/mock-group-${trip.id}`} size={70} />
+                <img src="/" alt="Line Group Qr" className="object-contain" />
               </div>
               <p className="text-[10px] text-gray-500 text-center leading-tight">สแกนเพื่อเข้าร่วม<br/>กลุ่มอัปเดตทริป</p>
             </div>
